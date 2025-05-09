@@ -116,6 +116,23 @@ func TestFanIn(t *testing.T) {
 func TestBatch(t *testing.T) {
 	t.Parallel()
 
+	t.Run("batch with 1 batchSize", func(t *testing.T) {
+		t.Parallel()
+		c1 := make(chan int)
+		c2 := c.Batch(c1, 1, 0)
+
+		go sliceToChan(c1, []int{0, 1, 2})
+
+		res := <-c2
+		assert.Equal(t, []int{0}, res)
+		res = <-c2
+		assert.Equal(t, []int{1}, res)
+		res = <-c2
+		assert.Equal(t, []int{2}, res)
+		_, ok := <-c2
+		assert.False(t, ok)
+	})
+
 	t.Run("batch without timeout", func(t *testing.T) {
 		t.Parallel()
 		c1 := make(chan int)

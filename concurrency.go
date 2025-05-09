@@ -139,10 +139,12 @@ func Batch[T any](ch <-chan T, batchSize int, timeout time.Duration) <-chan []T 
 	out := make(chan []T)
 
 	go func() {
-		for batchSize <= 1 {
+		if batchSize <= 1 {
 			for i := range ch {
 				out <- []T{i}
 			}
+			close(out)
+			return
 		}
 
 		var ticker *time.Ticker
