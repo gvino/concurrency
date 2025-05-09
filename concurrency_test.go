@@ -131,27 +131,28 @@ func TestBatch(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	// NOTE: fragile test, needs refactoring
 	t.Run("batch with timeout", func(t *testing.T) {
 		t.Parallel()
-		t.Skip("fragile, need to refactor")
 		c1 := make(chan int)
 		c2 := c.Batch(c1, 3, 80*time.Millisecond)
 
 		go func() {
-			for _, i := range []int{0, 1, 2, 3, 4} {
-				time.Sleep(35 * time.Millisecond)
+			for i := range 5 {
 				c1 <- i
 			}
+			time.Sleep(100 * time.Millisecond)
+
+			c1 <- 5
+
 			close(c1)
 		}()
 
 		res := <-c2
-		assert.Equal(t, []int{0, 1}, res)
+		assert.Equal(t, []int{0, 1, 2}, res)
 		res = <-c2
-		assert.Equal(t, []int{2, 3}, res)
+		assert.Equal(t, []int{3, 4}, res)
 		res = <-c2
-		assert.Equal(t, []int{4}, res)
+		assert.Equal(t, []int{5}, res)
 		_, ok := <-c2
 		assert.False(t, ok)
 	})

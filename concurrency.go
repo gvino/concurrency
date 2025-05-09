@@ -134,56 +134,55 @@ func FanIn[T any](streams ...<-chan T) <-chan T {
 //	[2, 3]
 //	[4]
 //
-//nolint:gocognit,cyclop // Need to refactor this function
+//nolint:gocognit,cyclop // Don't know at this time how to simplify more
 func Batch[T any](ch <-chan T, batchSize int, timeout time.Duration) <-chan []T {
 	out := make(chan []T)
 
 	go func() {
-		buf := make([]T, batchSize)
-		count := 0
-		var ticker *time.Ticker
-
-		dump := func() {
-			out <- buf[:count]
-			count = 0
-			buf = make([]T, batchSize)
+		for batchSize <= 1 {
+			for i := range ch {
+				out <- []T{i}
+			}
 		}
 
+		var ticker *time.Ticker
+		var tm <-chan time.Time
 		if timeout > 0 {
 			ticker = time.NewTicker(timeout)
 			defer ticker.Stop()
+			tm = ticker.C
 		}
 
 		for {
-			select {
-			case i, ok := <-ch:
-				if !ok {
-					if count != 0 {
-						out <- buf[:count]
+			buf := make([]T, 0, batchSize)
+			timerBreak := false
+
+			for range batchSize {
+				select {
+				case i, ok := <-ch:
+					if !ok {
+						if len(buf) > 0 {
+							out <- buf
+						}
+						close(out)
+						return
 					}
-					close(out)
-					return
+					buf = append(buf, i)
+
+				case <-tm:
+					timerBreak = true
 				}
 
-				buf[count] = i
-				count++
-
-				if count == batchSize {
-					dump()
-					if ticker != nil {
-						ticker.Reset(timeout)
-					}
+				if timerBreak {
+					break
 				}
-			default:
 			}
 
+			if len(buf) > 0 {
+				out <- buf
+			}
 			if ticker != nil {
-				select {
-				case <-ticker.C:
-					dump()
-				default:
-					continue
-				}
+				ticker.Reset(timeout)
 			}
 		}
 	}()
