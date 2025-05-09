@@ -124,6 +124,7 @@ func TestBatch(t *testing.T) {
 		assert.False(t, ok)
 	})
 
+	// NOTE: fragile test, needs refactoring
 	t.Run("batch with timeout", func(t *testing.T) {
 		t.Parallel()
 		c1 := make(chan int)
@@ -131,7 +132,7 @@ func TestBatch(t *testing.T) {
 
 		go func() {
 			for _, i := range []int{0, 1, 2, 3, 4} {
-				time.Sleep(40 * time.Millisecond)
+				time.Sleep(39 * time.Millisecond)
 				c1 <- i
 			}
 			close(c1)

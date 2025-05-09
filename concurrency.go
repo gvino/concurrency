@@ -1,3 +1,8 @@
+// Copyright 2025 George Vinogradov. All rights reserved
+// Use of this source code is governed by a MIT license that
+// can be found in the LICENSE file.
+
+// Package concurrency provides functions to simplify concurrent programming.
 package concurrency
 
 import (
@@ -5,9 +10,9 @@ import (
 	"time"
 )
 
-// Pipeline function creates converter for channels from IN to OUT types using
-// function <fn> to convert individual items. When input channel closes,
-// converter closes output channel.
+// Pipeline creates converter for channels from IN to OUT types using <fn> to
+// convert individual items. When input channel closes, converter closes output
+// channel.
 //
 // Example usage:
 //
@@ -45,8 +50,8 @@ func Pipeline[IN, OUT any](fn func(IN) OUT) func(in <-chan IN) <-chan OUT {
 	}
 }
 
-// FanIn function merges multiple channels into single channel. When all input
-// channels closes, FanIn closes output channel.
+// FanIn merges multiple channels into single channel. When all input channels
+// closes, FanIn closes output channel.
 //
 // Example usage:
 //
@@ -99,12 +104,12 @@ func FanIn[T any](streams ...<-chan T) <-chan T {
 	return out
 }
 
-// Batch function takes channel, batchSize and timeout and returns channel with
-// slices of elements. If timeout <= 0 then function waits full batch of items
-// from channel <ch> or closing that channel and sends batches to out channel.
+// Batch takes channel, batchSize and timeout and returns channel with slices of
+// elements. If timeout <= 0 then it waits full batch of items from channel <ch>
+// or closing that channel and sends batches to out channel.
 // If timeout greater than 0, buffer is sent to out channel if it is full or if
 // timeout reached after last send.
-// When input channel closed, function closes output channel.
+// When input channel closed, Batch closes output channel.
 //
 // Example usage:
 //
@@ -167,6 +172,7 @@ func Batch[T any](ch <-chan T, batchSize int, timeout time.Duration) <-chan []T 
 						ticker.Reset(timeout)
 					}
 				}
+			default:
 			}
 
 			if ticker != nil {
@@ -183,9 +189,9 @@ func Batch[T any](ch <-chan T, batchSize int, timeout time.Duration) <-chan []T 
 	return out
 }
 
-// Parallel function takes channel with tasks, worker function, count of parallel
-// workers and done channel and performs work on tasks in <count> goroutines using
-// <fn> function. Result of computations is sent to out channel.
+// Parallel takes channel with tasks, worker <fn>, count of parallel workers and
+// done channel and performs work on tasks in <count> goroutines using <fn>.
+// Result of computations is sent to out channel.
 // Output channel is closed after closing input channel and all tasks in it
 // completes.
 // When done channel closed all workers stops after finishing current task and
