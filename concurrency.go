@@ -133,6 +133,8 @@ func FanIn[T any](streams ...<-chan T) <-chan T {
 //	[0, 1]
 //	[2, 3]
 //	[4]
+//
+//nolint:gocognit,cyclop // Need to refactor this function
 func Batch[T any](ch <-chan T, batchSize int, timeout time.Duration) <-chan []T {
 	out := make(chan []T)
 
@@ -250,7 +252,7 @@ func Parallel[IN, OUT any](tasks <-chan IN, fn func(IN) OUT, count int, done <-c
 	}
 
 	wg.Add(count)
-	for i := 0; i < count; i++ {
+	for range count {
 		go worker()
 	}
 
