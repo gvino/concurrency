@@ -443,8 +443,10 @@ linters:
           - gosec
           - noctx
           - wrapcheck
+          - exhaustruct
       - source: "^func Test"
         linters:
           - funlen
           - gocognit
           - cyclop
+          - exhaustruct

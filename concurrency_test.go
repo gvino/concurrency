@@ -230,3 +230,102 @@ func TestParallel(t *testing.T) {
 		assert.Equal(t, []int{0, 1, 4}, res)
 	})
 }
+
+func TestChannelify(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		in   []int
+	}{
+		{
+			name: "empty slice",
+			in:   []int{},
+		},
+		{
+			name: "nil slice",
+		},
+		{
+			name: "single element",
+			in:   []int{1},
+		},
+		{
+			name: "multiple elements",
+			in:   []int{1, 2, 3, 4},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ch := c.Channelify(tt.in)
+
+			res := []int{}
+
+			for {
+				select {
+				case i, ok := <-ch:
+					if !ok {
+						if tt.in == nil {
+							assert.Equal(t, []int{}, res)
+						} else {
+							assert.Equal(t, tt.in, res)
+						}
+						return
+					}
+					res = append(res, i)
+				case <-time.After(1 * time.Second):
+					t.Fatal("Channelify timed out")
+				}
+			}
+		})
+	}
+}
+
+func TestSlicify(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		ch     chan int
+		values []int
+	}{
+		{
+			name: "nil channel",
+		},
+		{
+			name:   "empty channel",
+			ch:     make(chan int),
+			values: []int{},
+		},
+		{
+			name:   "single element",
+			ch:     make(chan int),
+			values: []int{1},
+		},
+		{
+			name:   "multiple elements",
+			ch:     make(chan int),
+			values: []int{1, 2, 3, 4},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			go func() {
+				for _, r := range tt.values {
+					tt.ch <- r
+				}
+				if tt.ch != nil {
+					close(tt.ch)
+				}
+			}()
+
+			res := c.Slicify(tt.ch)
+			assert.Equal(t, tt.values, res)
+		})
+	}
+}

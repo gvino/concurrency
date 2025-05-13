@@ -264,3 +264,35 @@ func Parallel[IN, OUT any](tasks <-chan IN, fn func(IN) OUT, count int, done <-c
 
 	return out
 }
+
+// Channelify takes slice of type T and returns channel of T with elements of
+// original slice sent to it.
+func Channelify[T any](items []T) <-chan T {
+	out := make(chan T)
+
+	go func() {
+		for _, item := range items {
+			out <- item
+		}
+		close(out)
+	}()
+
+	return out
+}
+
+// Slicify takes channel of type T and returns slice with all elements readed
+// from slice.
+// This is blocking function!
+func Slicify[T any](in <-chan T) []T {
+	if in == nil {
+		return nil
+	}
+
+	out := []T{}
+
+	for i := range in {
+		out = append(out, i)
+	}
+
+	return out
+}
